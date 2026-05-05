@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShiftLog — Work Hours Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f2ee;
+  --card: #ffffff;
+  --card2: #faf9f7;
+  --border: #e8e3dc;
+  --border2: #d4cdc3;
+  --ink: #1a1714;
+  --ink2: #4a4440;
+  --muted: #9a9088;
+  --accent: #c85c2d;
+  --accent-bg: #fdf0ea;
+  --green: #2d7d52;
+  --green-bg: #eaf4ef;
+  --blue: #2563a8;
+  --warn: #b8860b;
+  --radius: 18px;
+  --shadow: 0 2px 12px rgba(26,23,20,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,23,20,0.12);
+}
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; padding:0 0 90px; }
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image: linear-gradient(rgba(26,23,20,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(26,23,20,0.03) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.wrap { max-width:700px; margin:0 auto; padding:0 18px; position:relative; z-index:1; }
+
+/* TOPBAR */
+.topbar { background:var(--ink); color:#fff; position:sticky; top:0; z-index:100; box-shadow:0 2px 16px rgba(26,23,20,0.25); }
+.topbar-inner { max-width:700px; margin:0 auto; display:flex; align-items:center; gap:14px; height:56px; padding:0 18px; }
+.brand { display:flex; align-items:center; gap:10px; flex:1; }
+.brand-icon { width:28px; height:28px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.brand-name { font-family:'Playfair Display',serif; font-size:18px; }
+.brand-name em { color:var(--accent); font-style:normal; }
+.tabs { display:flex; gap:2px; background:rgba(255,255,255,0.08); border-radius:10px; padding:3px; }
+.tab { background:none; border:none; color:rgba(255,255,255,0.45); padding:5px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all 0.2s; letter-spacing:0.3px; }
+.tab.on { background:var(--accent); color:#fff; }
+
+/* WEEK NAV */
+.week-nav { display:flex; align-items:center; gap:12px; padding:20px 0 0; }
+.nav-btn { width:36px; height:36px; border-radius:10px; background:var(--card); border:1.5px solid var(--border); color:var(--ink2); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; box-shadow:var(--shadow); }
+.nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.wk-info { flex:1; }
+.wk-info h2 { font-size:16px; font-weight:700; }
+.wk-info p { font-size:12px; color:var(--muted); margin-top:1px; }
+.today-pill { background:var(--accent-bg); border:1.5px solid rgba(200,92,45,0.25); color:var(--accent); font-size:12px; font-weight:700; padding:5px 12px; border-radius:99px; cursor:pointer; transition:all 0.15s; }
+.today-pill:hover { background:var(--accent); color:#fff; }
+
+/* CAP */
+.cap-wrap { padding:16px 0 18px; }
+.cap-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.cap-lbl { font-size:13px; font-weight:700; color:var(--ink2); }
+.cap-right { display:flex; align-items:center; gap:8px; }
+.cap-input { width:58px; text-align:center; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; background:var(--card); border:1.5px solid var(--border); border-radius:8px; padding:4px 6px; outline:none; color:var(--ink); }
+.cap-input:focus { border-color:var(--accent); }
+.cap-unit { font-size:12px; color:var(--muted); }
+.cap-pct { font-size:13px; font-weight:800; }
+.prog-track { height:10px; background:var(--border); border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--green),#4ade80); transition:width 0.7s cubic-bezier(.34,1.56,.64,1),background .3s; }
+.prog-fill.w { background:linear-gradient(90deg,var(--warn),#fbbf24); }
+.prog-fill.o { background:linear-gradient(90deg,var(--accent),#ef4444); }
+
+/* STATS */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px; }
+.stat { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:14px 12px; box-shadow:var(--shadow); }
+.stat-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:6px; }
+.stat-v { font-size:20px; font-weight:800; font-family:'Playfair Display',serif; line-height:1; }
+.stat-v.g { color:var(--green); }
+.stat-v.b { color:var(--blue); }
+.stat-v.a { color:var(--accent); }
+.stat-v.r { color:#dc2626; }
+.stat-s { font-size:10px; color:var(--muted); margin-top:4px; }
+
+/* ALERT */
+.over-alert { background:#fef2f2; border:1.5px solid #fca5a5; border-radius:12px; padding:10px 14px; font-size:13px; color:#dc2626; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.over-alert.h { display:none; }
+
+/* DAYS */
+.days { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.day-card { background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); transition:border-color .2s,box-shadow .2s; }
+.day-card.tc { border-color:rgba(200,92,45,0.4); box-shadow:0 0 0 3px rgba(200,92,45,0.06),var(--shadow); }
+.day-card:hover { box-shadow:var(--shadow-lg); }
+.d-head { display:flex; align-items:center; gap:14px; padding:13px 16px; cursor:pointer; user-select:none; }
+.d-ind { width:36px; height:36px; border-radius:10px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--card2); border:1.5px solid var(--border); line-height:1.15; }
+.d-ind .dn { font-size:9px; font-weight:700; text-transform:uppercase; color:var(--muted); }
+.d-ind .dd { font-size:17px; font-weight:800; color:var(--ink); }
+.d-ind.hs { background:var(--green-bg); border-color:rgba(45,125,82,0.3); }
+.d-ind.hs .dd { color:var(--green); }
+.d-ind.ti { background:var(--accent-bg); border-color:rgba(200,92,45,0.4); }
+.d-ind.ti .dd, .d-ind.ti .dn { color:var(--accent); }
+.d-info { flex:1; }
+.d-name { font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.t-badge { font-size:10px; background:var(--accent); color:#fff; padding:2px 7px; border-radius:99px; font-weight:700; }
+.d-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+.d-hrs { text-align:right; }
+.d-hv { font-size:15px; font-weight:800; font-family:'Playfair Display',serif; color:var(--green); }
+.d-hv.z { color:var(--muted); font-size:13px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:400; }
+.d-pv { font-size:11px; color:var(--muted); text-align:right; }
+.chev { color:var(--muted); font-size:11px; margin-left:8px; transition:transform .25s; }
+.day-card.op .chev { transform:rotate(180deg); }
+.d-body { display:none; border-top:1.5px solid var(--border); padding:14px 16px 16px; }
+.day-card.op .d-body { display:block; }
+
+/* SHIFT LIST */
+.sh-list { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.sh-row { display:flex; align-items:center; gap:10px; background:var(--card2); border:1.5px solid var(--border); border-radius:10px; padding:9px 12px; }
+.sh-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sh-i { flex:1; }
+.sh-times { font-size:13px; font-weight:600; }
+.sh-job { font-size:11px; color:var(--muted); margin-top:1px; }
+.sh-dur { font-size:13px; font-weight:800; font-family:'Playfair Display',serif; color:var(--green); min-width:38px; text-align:right; }
+.sh-pay { font-size:11px; color:var(--muted); min-width:50px; text-align:right; }
+.sh-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:3px 6px; border-radius:6px; transition:all .15s; line-height:1; }
+.sh-del:hover { color:#dc2626; background:#fef2f2; }
+.no-sh { font-size:12px; color:var(--muted); text-align:center; padding:12px 0; }
+
+/* ADD FORM */
+.add-form { background:var(--card2); border:1.5px dashed var(--border2); border-radius:12px; padding:14px; }
+.add-form-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:12px; }
+.f-row { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+.ff { display:flex; flex-direction:column; gap:4px; }
+.ff label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+.ff input, .ff select { background:var(--card); border:1.5px solid var(--border); border-radius:9px; padding:8px 10px; font-size:13px; font-weight:500; color:var(--ink); font-family:'Plus Jakarta Sans',sans-serif; outline:none; transition:border-color .2s; }
+.ff input[type="time"] { width:108px; }
+.ff select { width:140px; cursor:pointer; }
+.ff input:focus, .ff select:focus { border-color:var(--accent); }
+.add-sh-btn { background:var(--accent); color:#fff; border:none; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:opacity .15s,transform .1s; margin-top:18px; white-space:nowrap; }
+.add-sh-btn:hover { opacity:.88; }
+.add-sh-btn:active { transform:scale(.97); }
+
+/* JOBS TAB */
+.panel { padding-top:22px; }
+.panel h1 { font-family:'Playfair Display',serif; font-size:22px; margin-bottom:4px; }
+.panel-sub { font-size:13px; color:var(--muted); margin-bottom:20px; }
+.jobs-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+.j-card { background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); padding:15px 16px; display:flex; align-items:center; gap:14px; box-shadow:var(--shadow); }
+.j-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.j-info { flex:1; }
+.j-name { font-size:15px; font-weight:700; }
+.j-rate-txt { font-size:12px; color:var(--muted); margin-top:2px; }
+.j-rate-inp { width:80px; text-align:center; font-size:14px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; background:var(--card2); border:1.5px solid var(--border); border-radius:8px; padding:5px 8px; outline:none; color:var(--ink); }
+.j-rate-inp:focus { border-color:var(--accent); }
+.j-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:17px; padding:4px 8px; border-radius:8px; transition:all .15s; }
+.j-del:hover { background:#fef2f2; color:#dc2626; }
+.add-job-box { background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); }
+.add-job-box h3 { font-size:14px; font-weight:700; margin-bottom:14px; }
+.picker-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.e-opt { width:34px; height:34px; border-radius:9px; border:1.5px solid var(--border); background:var(--card2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.e-opt:hover, .e-opt.on { border-color:var(--accent); background:var(--accent-bg); }
+.c-opt { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:all .15s; }
+.c-opt:hover, .c-opt.on { border-color:var(--ink); transform:scale(1.18); }
+.j-form-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:14px; }
+.j-form-row .ff input { width:155px; }
+.j-form-row .ff:nth-child(2) input { width:90px; }
+.add-j-btn { background:var(--ink); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:opacity .15s; margin-top:14px; }
+.add-j-btn:hover { opacity:.8; }
+
+/* BOTTOM NAV */
+.bnav { position:fixed; bottom:0; left:0; right:0; background:var(--ink); display:flex; justify-content:center; gap:4px; padding:10px 20px 18px; z-index:100; box-shadow:0 -4px 20px rgba(26,23,20,0.15); }
+.bn { flex:1; max-width:200px; background:none; border:none; color:rgba(255,255,255,0.35); cursor:pointer; padding:8px 12px; border-radius:12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700; display:flex; flex-direction:column; align-items:center; gap:3px; transition:all .2s; letter-spacing:.3px; }
+.bn.on { background:rgba(255,255,255,0.08); color:#fff; }
+.bn span { font-size:20px; }
+
+@keyframes up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.anim { animation:up .35s ease both; }
+
+@media(max-width:500px) {
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .stat-v { font-size:18px; }
+  .ff input[type="time"],.ff select { width:100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-icon">⏱</div>
+      <div class="brand-name">Shift<em>Log</em></div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" onclick="showTab('week')">Week</button>
+      <button class="tab" onclick="showTab('jobs')">Jobs</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK TAB -->
+<div id="t-week" class="wrap">
+  <div class="week-nav">
+    <button class="nav-btn" onclick="changeWeek(-1)">←</button>
+    <div class="wk-info"><h2 id="wkRange">–</h2><p id="wkSub">–</p></div>
+    <button class="today-pill" onclick="goToday()">Today</button>
+    <button class="nav-btn" onclick="changeWeek(1)">→</button>
+  </div>
+
+  <div class="cap-wrap">
+    <div class="cap-row">
+      <span class="cap-lbl">Weekly Hour Cap</span>
+      <div class="cap-right">
+        <input class="cap-input" type="number" id="capInp" min="1" max="168" step="1" oninput="onCapChange()">
+        <span class="cap-unit">hrs max</span>
+        <span class="cap-pct" id="capPct">0%</span>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="over-alert h" id="overAlert">⚠️ You have exceeded this week's cap!</div>
+
+  <div class="stats">
+    <div class="stat anim"><div class="stat-lbl">Hours</div><div class="stat-v g" id="sHrs">0.0</div><div class="stat-s">this week</div></div>
+    <div class="stat anim" style="animation-delay:50ms"><div class="stat-lbl">Remaining</div><div class="stat-v a" id="sRem">–</div><div class="stat-s">hrs left</div></div>
+    <div class="stat anim" style="animation-delay:100ms"><div class="stat-lbl">Earned</div><div class="stat-v b" id="sPay">$0</div><div class="stat-s">est. pay</div></div>
+    <div class="stat anim" style="animation-delay:150ms"><div class="stat-lbl">Shifts</div><div class="stat-v" id="sShifts">0</div><div class="stat-s">logged</div></div>
+  </div>
+
+  <div class="days" id="daysList"></div>
+</div>
+
+<!-- JOBS TAB -->
+<div id="t-jobs" class="wrap" style="display:none">
+  <div class="panel">
+    <h1>Your Jobs</h1>
+    <p class="panel-sub">Manage each job and its hourly rate. You'll pick a job when logging shifts.</p>
+    <div class="jobs-list" id="jobsList"></div>
+    <div class="add-job-box">
+      <h3>+ Add a Job</h3>
+      <div class="picker-row" id="emojiPick"></div>
+      <div class="picker-row" id="colorPick"></div>
+      <div class="j-form-row">
+        <div class="ff"><label>Job Name</label><input type="text" id="jName" placeholder="e.g. Library Desk"></div>
+        <div class="ff"><label>Rate ($/hr)</label><input type="number" id="jRate" min="0" step="0.5" placeholder="12.50"></div>
+      </div>
+      <button class="add-j-btn" onclick="addJob()">Add Job</button>
+    </div>
+  </div>
+</div>
+
+<div class="bnav">
+  <button class="bn on" id="bn-week" onclick="showTab('week')"><span>📅</span>Week</button>
+  <button class="bn" id="bn-jobs" onclick="showTab('jobs')"><span>💼</span>Jobs</button>
+</div>
+
+<script>
+const SK = 'shiftlog_v2';
+const DNAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const EMOJIS = ['💼','📚','☕','🏫','🏪','🍽️','🖥️','🏥','📦','✏️','🎓','🔧'];
+const COLORS = ['#2d7d52','#2563a8','#c85c2d','#7c3aed','#be185d','#b45309','#0e7490','#374151','#dc2626','#0891b2'];
+
+let S = {};
+try { S = JSON.parse(localStorage.getItem(SK)) || {}; } catch(e){}
+if (!S.jobs) S.jobs = [{id:'j0',name:'Main Job',rate:12,emoji:'💼',color:'#2d7d52'}];
+if (!S.weeks) S.weeks = {};
+let wOff = 0, pEmoji = EMOJIS[0], pColor = COLORS[0];
+
+const save = () => localStorage.setItem(SK, JSON.stringify(S));
+
+function getMon(d) {
+  const dt = new Date(d); dt.setHours(0,0,0,0);
+  const day = dt.getDay();
+  dt.setDate(dt.getDate() + (day===0 ? -6 : 1-day));
+  return dt;
+}
+function wKey(off=wOff) {
+  const m = getMon(new Date()); m.setDate(m.getDate()+off*7);
+  return m.toISOString().slice(0,10);
+}
+function wDates(off=wOff) {
+  const m = getMon(new Date()); m.setDate(m.getDate()+off*7);
+  return DNAMES.map((_,i)=>{ const d=new Date(m); d.setDate(m.getDate()+i); return d; });
+}
+function fmt(d) { return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'}); }
+function getW(off=wOff) {
+  const k=wKey(off);
+  if(!S.weeks[k]) S.weeks[k]={cap:20,days:{}};
+  return S.weeks[k];
+}
+function dayShifts(di) {
+  const w=getW(); if(!w.days[di]) w.days[di]=[]; return w.days[di];
+}
+function tdiff(s,e) {
+  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  const m=(eh*60+em)-(sh*60+sm); return m>0?Math.round(m/60*100)/100:0;
+}
+function totHrs() { let t=0; for(let i=0;i<7;i++) dayShifts(i).forEach(s=>t+=s.hrs); return Math.round(t*100)/100; }
+function totPay() { let t=0; for(let i=0;i<7;i++) dayShifts(i).forEach(s=>{ const j=S.jobs.find(x=>x.id===s.jid); if(j) t+=s.hrs*j.rate; }); return t; }
+function totSh() { let t=0; for(let i=0;i<7;i++) t+=dayShifts(i).length; return t; }
+
+function changeWeek(d) { wOff+=d; render(); }
+function goToday() { wOff=0; render(); }
+function onCapChange() { const v=parseInt(document.getElementById('capInp').value)||20; getW().cap=v; save(); renderStats(); }
+
+function render() { renderNav(); renderStats(); renderDays(); }
+
+function renderNav() {
+  const dd=wDates();
+  document.getElementById('wkRange').textContent=`${fmt(dd[0])} – ${fmt(dd[6])}`;
+  document.getElementById('wkSub').textContent= wOff===0?'Current week': wOff<0?`${Math.abs(wOff)} week${Math.abs(wOff)>1?'s':''} ago`:`${wOff} week${wOff>1?'s':''} ahead`;
+  document.getElementById('capInp').value=getW().cap;
+}
+
+function renderStats() {
+  const cap=getW().cap||20, hrs=totHrs(), pay=totPay(), remain=Math.max(0,cap-hrs);
+  const pct=Math.min(100,Math.round(hrs/cap*100)), over=hrs>cap;
+  document.getElementById('sHrs').textContent=hrs.toFixed(1);
+  document.getElementById('sHrs').className='stat-v '+(over?'r':'g');
+  document.getElementById('sRem').textContent=over?'OVER!':remain.toFixed(1);
+  document.getElementById('sRem').className='stat-v '+(over?'r':'a');
+  document.getElementById('sPay').textContent='$'+pay.toFixed(2);
+  document.getElementById('sShifts').textContent=totSh();
+  const pEl=document.getElementById('capPct');
+  pEl.textContent=pct+'%'; pEl.style.color=over?'#dc2626':pct>80?'var(--warn)':'var(--green)';
+  const bar=document.getElementById('progBar');
+  bar.style.width=pct+'%'; bar.className='prog-fill'+(over?' o':pct>80?' w':'');
+  document.getElementById('overAlert').className='over-alert'+(over?'':' h');
+}
+
+function renderDays() {
+  const dd=wDates(), today=new Date(); today.setHours(0,0,0,0);
+  const list=document.getElementById('daysList');
+  const open=new Set();
+  list.querySelectorAll('.day-card.op').forEach(c=>open.add(+c.dataset.i));
+  list.innerHTML='';
+
+  DNAMES.forEach((dn,i)=>{
+    const d=dd[i], isT=d.getTime()===today.getTime();
+    const shifts=dayShifts(i);
+    const hrs=Math.round(shifts.reduce((a,s)=>a+s.hrs,0)*100)/100;
+    const dpay=shifts.reduce((a,s)=>{ const j=S.jobs.find(x=>x.id===s.jid); return a+(j?s.hrs*j.rate:0); },0);
+    const isOp=open.has(i)||(wOff===0&&isT);
+
+    const card=document.createElement('div');
+    card.className='day-card'+(isT?' tc':'')+(isOp?' op':'');
+    card.dataset.i=i; card.style.animationDelay=(i*35)+'ms'; card.classList.add('anim');
+
+    const shHtml=shifts.length===0
+      ?'<div class="no-sh">No shifts yet — log one below</div>'
+      :shifts.map(sh=>{
+          const j=S.jobs.find(x=>x.id===sh.jid)||{};
+          return `<div class="sh-row">
+            <div class="sh-dot" style="background:${j.color||'#999'}"></div>
+            <div class="sh-i">
+              <div class="sh-times">${sh.s} → ${sh.e}</div>
+              <div class="sh-job">${j.emoji||''} ${j.name||'Unknown'}</div>
+            </div>
+            <div class="sh-dur">${sh.hrs.toFixed(2)}h</div>
+            <div class="sh-pay">$${(sh.hrs*(j.rate||0)).toFixed(2)}</div>
+            <button class="sh-del" onclick="removeShift(${i},${sh.id})">✕</button>
+          </div>`;
+        }).join('');
+
+    const jOpts=S.jobs.map(j=>`<option value="${j.id}">${j.emoji} ${j.name} ($${j.rate}/hr)</option>`).join('');
+
+    card.innerHTML=`
+      <div class="d-head" onclick="this.closest('.day-card').classList.toggle('op')">
+        <div class="d-ind ${hrs>0?'hs':''} ${isT?'ti':''}">
+          <div class="dn">${dn.slice(0,3)}</div>
+          <div class="dd">${d.getDate()}</div>
+        </div>
+        <div class="d-info">
+          <div class="d-name">${dn}${isT?'<span class="t-badge">TODAY</span>':''}</div>
+          <div class="d-meta">${shifts.length} shift${shifts.length!==1?'s':''}</div>
+        </div>
+        <div class="d-hrs">
+          <div class="d-hv ${hrs===0?'z':''}">${hrs===0?'—':hrs.toFixed(2)+'h'}</div>
+          ${hrs>0?`<div class="d-pv">$${dpay.toFixed(2)}</div>`:''}
+        </div>
+        <div class="chev">▾</div>
+      </div>
+      <div class="d-body">
+        <div class="sh-list">${shHtml}</div>
+        <div class="add-form">
+          <div class="add-form-title">Log a Shift</div>
+          <div class="f-row">
+            <div class="ff"><label>Job</label><select id="js-${i}">${jOpts}</select></div>
+            <div class="ff"><label>Start</label><input type="time" id="st-${i}"></div>
+            <div class="ff"><label>End</label><input type="time" id="en-${i}"></div>
+            <button class="add-sh-btn" onclick="handleAdd(${i})">+ Log Shift</button>
+          </div>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function removeShift(di, id) {
+  const w=getW(); if(!w.days[di]) return;
+  w.days[di]=w.days[di].filter(s=>s.id!==id); save(); render();
+}
+
+function handleAdd(di) {
+  const s=document.getElementById('st-'+di).value;
+  const e=document.getElementById('en-'+di).value;
+  const jid=document.getElementById('js-'+di).value;
+  if(!s||!e) return alert('Please enter both start and end time.');
+  const hrs=tdiff(s,e);
+  if(hrs<=0) return alert('End time must be after start time.');
+  dayShifts(di).push({id:Date.now(),s,e,hrs,jid}); save(); render();
+}
+
+// JOBS
+function renderJobs() {
+  const list=document.getElementById('jobsList');
+  list.innerHTML='';
+  S.jobs.forEach((j,i)=>{
+    const c=document.createElement('div');
+    c.className='j-card anim'; c.style.animationDelay=(i*40)+'ms';
+    c.innerHTML=`
+      <div class="j-icon" style="background:${j.color}20;border:2px solid ${j.color}50">${j.emoji}</div>
+      <div class="j-info">
+        <div class="j-name">${j.name}</div>
+        <div class="j-rate-txt">$${j.rate}/hr</div>
+      </div>
+      <input class="j-rate-inp" type="number" value="${j.rate}" min="0" step="0.5"
+        onchange="updRate('${j.id}',this.value)" title="Edit hourly rate">
+      <button class="j-del" onclick="delJob('${j.id}')">🗑</button>`;
+    list.appendChild(c);
+  });
+  // emoji
+  const ep=document.getElementById('emojiPick');
+  ep.innerHTML=EMOJIS.map(e=>`<div class="e-opt${e===pEmoji?' on':''}" onclick="pickE('${e}',this)">${e}</div>`).join('');
+  // color
+  const cp=document.getElementById('colorPick');
+  cp.innerHTML=COLORS.map(c=>`<div class="c-opt${c===pColor?' on':''}" style="background:${c}" onclick="pickC('${c}',this)"></div>`).join('');
+}
+
+function pickE(e,el){ pEmoji=e; document.querySelectorAll('.e-opt').forEach(x=>x.classList.remove('on')); el.classList.add('on'); }
+function pickC(c,el){ pColor=c; document.querySelectorAll('.c-opt').forEach(x=>x.classList.remove('on')); el.classList.add('on'); }
+
+function addJob() {
+  const name=document.getElementById('jName').value.trim();
+  const rate=parseFloat(document.getElementById('jRate').value);
+  if(!name||isNaN(rate)) return alert('Enter a job name and hourly rate.');
+  S.jobs.push({id:'j'+Date.now(),name,rate,emoji:pEmoji,color:pColor});
+  document.getElementById('jName').value=''; document.getElementById('jRate').value='';
+  save(); renderJobs(); render();
+}
+
+function delJob(id) {
+  if(!confirm('Delete this job?')) return;
+  S.jobs=S.jobs.filter(j=>j.id!==id); save(); renderJobs(); render();
+}
+
+function updRate(id,val) {
+  const j=S.jobs.find(x=>x.id===id); if(j){ j.rate=parseFloat(val)||0; save(); render(); }
+}
+
+function showTab(t) {
+  document.getElementById('t-week').style.display=t==='week'?'':'none';
+  document.getElementById('t-jobs').style.display=t==='jobs'?'':'none';
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='week')));
+  document.getElementById('bn-week').classList.toggle('on',t==='week');
+  document.getElementById('bn-jobs').classList.toggle('on',t==='jobs');
+  if(t==='jobs') renderJobs();
+}
+
+render(); renderJobs();
+</script>
+</body>
+</html>
