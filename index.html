@@ -345,7 +345,7 @@ function tdiff(s,e) {
 // jobs: /shiftlog/data/jobs/{auto}
 // weeks: /shiftlog/weeks/{weekKey}  → {cap, days:{0:[shifts],1:[],...}}
 const jobsCol  = () => collection(db,'shiftlog','data','jobs');
-const weekDoc  = (k=wKey()) => doc(db,'shiftlog','weeks',k);
+const weekDoc = (k=wKey()) => doc(db, 'shiftlog_data', 'weeks', k);
 
 // ── listen to jobs (real-time) ──
 function listenJobs() {
