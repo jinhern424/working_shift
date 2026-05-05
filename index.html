@@ -344,7 +344,7 @@ function tdiff(s,e) {
 // ── Firestore paths ──
 // jobs: /shiftlog/data/jobs/{auto}
 // weeks: /shiftlog/weeks/{weekKey}  → {cap, days:{0:[shifts],1:[],...}}
-const jobsCol  = () => collection(db,'shiftlog','data','jobs');
+const jobsCol = () => collection(db, 'jobs');
 const weekDoc = (k=wKey()) => doc(db, 'shiftlog_data', 'weeks', k);
 
 // ── listen to jobs (real-time) ──
@@ -438,13 +438,13 @@ window.addJob=async function(){
 window.delJob=async function(id){
   if(!confirm('Delete this job?')) return;
   setSyncBadge('syncing','Syncing...');
-  await deleteDoc(doc(db,'shiftlog','data','jobs',id));
+  await deleteDoc(doc(db, 'jobs', id));
 };
 
 // ── update job rate ──
 window.updRate=async function(id,val){
   setSyncBadge('syncing','Syncing...');
-  await updateDoc(doc(db,'shiftlog','data','jobs',id),{rate:parseFloat(val)||0});
+  await updateDoc(doc(db, 'jobs', id), {rate:parseFloat(val)||0});
 };
 
 // ── emoji/color pickers ──
