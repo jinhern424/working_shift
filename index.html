@@ -183,6 +183,25 @@ body::before {
 .add-sh-btn:active { transform:scale(.97); }
 .add-sh-btn:disabled { opacity:.5; cursor:not-allowed; }
 
+/* ── BREAK STYLES ── */
+.break-toggle { background:none; border:1.5px solid var(--border); border-radius:8px; padding:5px 11px; font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s; margin-top:10px; display:inline-flex; align-items:center; gap:5px; }
+.break-toggle:hover { border-color:var(--blue); color:var(--blue); }
+.break-section { margin-top:10px; background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:12px; }
+.break-section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.break-list { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+.break-row { display:flex; align-items:center; gap:8px; background:var(--card2); border:1.5px solid var(--border); border-radius:8px; padding:7px 10px; }
+.break-icon { font-size:13px; }
+.break-info { flex:1; font-size:12px; }
+.break-times { font-weight:600; color:var(--ink2); }
+.break-label { font-size:10px; color:var(--muted); margin-top:1px; }
+.break-dur { font-size:12px; font-weight:700; color:var(--warn); min-width:36px; text-align:right; }
+.break-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:2px 5px; border-radius:5px; transition:all .15s; line-height:1; }
+.break-del:hover { color:#dc2626; background:#fef2f2; }
+.add-break-row { display:flex; gap:6px; flex-wrap:wrap; align-items:flex-end; }
+.add-break-btn { background:rgba(37,99,168,0.1); color:var(--blue); border:1.5px solid rgba(37,99,168,0.2); border-radius:8px; padding:7px 13px; font-size:12px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:all .15s; white-space:nowrap; margin-top:14px; }
+.add-break-btn:hover { background:var(--blue); color:#fff; }
+.sh-break-badge { font-size:10px; background:rgba(184,134,11,0.12); color:var(--warn); border-radius:5px; padding:2px 6px; font-weight:700; margin-left:4px; }
+
 /* ── JOBS TAB ── */
 .panel { padding-top:22px; }
 .panel h1 { font-family:'Playfair Display',serif; font-size:22px; margin-bottom:4px; }
@@ -209,6 +228,39 @@ body::before {
 .j-form-row .ff:nth-child(2) input { width:90px; }
 .add-j-btn { background:var(--ink); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:opacity .15s; margin-top:14px; }
 .add-j-btn:hover { opacity:.8; }
+
+/* ── EDIT JOB MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(26,23,20,0.55); z-index:500;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  backdrop-filter:blur(3px);
+  animation:fadeIn .2s ease;
+}
+.modal-overlay.h { display:none; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-box {
+  background:var(--card); border:1.5px solid var(--border); border-radius:22px;
+  padding:28px 24px; width:100%; max-width:400px; box-shadow:var(--shadow-lg);
+  animation:up .25s ease;
+}
+.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.modal-title { font-family:'Playfair Display',serif; font-size:20px; }
+.modal-close { background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer; padding:4px 8px; border-radius:8px; transition:all .15s; line-height:1; }
+.modal-close:hover { background:var(--card2); color:var(--ink); }
+.modal-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+.modal-field label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+.modal-field input { background:var(--card2); border:1.5px solid var(--border); border-radius:10px; padding:10px 13px; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink); outline:none; transition:border-color .2s; }
+.modal-field input:focus { border-color:var(--accent); }
+.modal-section-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:8px; }
+.modal-picker { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+.modal-e-opt { width:36px; height:36px; border-radius:9px; border:1.5px solid var(--border); background:var(--card2); cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.modal-e-opt:hover,.modal-e-opt.on { border-color:var(--accent); background:var(--accent-bg); }
+.modal-c-opt { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:all .15s; }
+.modal-c-opt:hover,.modal-c-opt.on { border-color:var(--ink); transform:scale(1.18); }
+.modal-save-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:opacity .15s; margin-top:4px; }
+.modal-save-btn:hover { opacity:.88; }
+.j-edit-btn { background:none; border:1.5px solid var(--border); color:var(--muted); border-radius:8px; padding:5px 10px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .15s; }
+.j-edit-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
 
 /* ── BOTTOM NAV ── */
 .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--ink); display:flex; justify-content:center; gap:4px; padding:10px 20px 18px; z-index:100; box-shadow:0 -4px 20px rgba(26,23,20,0.15); }
@@ -313,6 +365,29 @@ body::before {
         </div>
         <button class="add-j-btn" onclick="addJob()">Add Job</button>
       </div>
+    </div>
+  </div>
+
+  <!-- EDIT JOB MODAL -->
+  <div class="modal-overlay h" id="editModal" onclick="closeEditModal(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Edit Job</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-field">
+        <label>Job Name</label>
+        <input type="text" id="editName" placeholder="e.g. Library Desk">
+      </div>
+      <div class="modal-field">
+        <label>Hourly Rate ($/hr)</label>
+        <input type="number" id="editRate" min="0" step="0.5" placeholder="12.50">
+      </div>
+      <div class="modal-section-lbl">Icon</div>
+      <div class="modal-picker" id="editEmojiPick"></div>
+      <div class="modal-section-lbl">Colour</div>
+      <div class="modal-picker" id="editColorPick"></div>
+      <button class="modal-save-btn" onclick="saveEditJob()">Save Changes</button>
     </div>
   </div>
 
@@ -496,14 +571,14 @@ window.handleAdd = async function(di) {
   const e  = document.getElementById('en-'+di).value;
   const jid= document.getElementById('js-'+di).value;
   if(!s||!e) return alert('Please enter both start and end time.');
-  const hrs=tdiff(s,e);
-  if(hrs<=0) return alert('End time must be after start time.');
+  const grossHrs=tdiff(s,e);
+  if(grossHrs<=0) return alert('End time must be after start time.');
   const btn=document.getElementById('addbtn-'+di);
   if(btn) btn.disabled=true;
   const k=wKey(), data=weeksCache[k]||{cap:20,days:{}};
   if(!data.days) data.days={};
   if(!data.days[di]) data.days[di]=[];
-  data.days[di].push({id:Date.now(),s,e,hrs,jid});
+  data.days[di].push({id:Date.now(),s,e,hrs:grossHrs,jid,breaks:[]});
   await saveWeek(data,k);
   if(btn) btn.disabled=false;
 };
@@ -512,6 +587,41 @@ window.removeShift = async function(di,id) {
   const k=wKey(), data=weeksCache[k];
   if(!data||!data.days||!data.days[di]) return;
   data.days[di]=data.days[di].filter(x=>x.id!==id);
+  await saveWeek(data,k);
+};
+
+// ── break helpers ──
+function netHrs(sh) {
+  const breakMins=(sh.breaks||[]).reduce((a,b)=>a+b.mins,0);
+  return Math.max(0, Math.round((sh.hrs - breakMins/60)*100)/100);
+}
+
+window.toggleBreakSection = function(shiftId) {
+  const el=document.getElementById('break-sec-'+shiftId);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+};
+
+window.addBreak = async function(di, shiftId) {
+  const bs=document.getElementById('bst-'+shiftId).value;
+  const be=document.getElementById('ben-'+shiftId).value;
+  const bl=document.getElementById('blbl-'+shiftId).value.trim()||'Break';
+  if(!bs||!be) return alert('Please enter break start and end time.');
+  const mins=Math.round(tdiff(bs,be)*60);
+  if(mins<=0) return alert('Break end must be after break start.');
+  const k=wKey(), data=weeksCache[k];
+  const shift=data.days[di].find(x=>x.id===shiftId);
+  if(!shift) return;
+  if(!shift.breaks) shift.breaks=[];
+  if(mins>=shift.hrs*60) return alert('Break cannot be longer than the shift.');
+  shift.breaks.push({id:Date.now(),bs,be,mins,label:bl});
+  await saveWeek(data,k);
+};
+
+window.removeBreak = async function(di, shiftId, breakId) {
+  const k=wKey(), data=weeksCache[k];
+  const shift=data.days[di].find(x=>x.id===shiftId);
+  if(!shift||!shift.breaks) return;
+  shift.breaks=shift.breaks.filter(b=>b.id!==breakId);
   await saveWeek(data,k);
 };
 
@@ -566,9 +676,10 @@ function renderStats() {
   for(let i=0;i<7;i++){
     const shifts=(data.days&&data.days[i])||[];
     shifts.forEach(sh=>{
-      hrs+=sh.hrs; shCnt++;
+      const net=netHrs(sh);
+      hrs+=net; shCnt++;
       const j=jobs.find(x=>x.id===sh.jid);
-      if(j) pay+=sh.hrs*j.rate;
+      if(j) pay+=net*j.rate;
     });
   }
   hrs=Math.round(hrs*100)/100;
@@ -596,8 +707,8 @@ function renderDays() {
   DNAMES.forEach((dn,i)=>{
     const d=dd[i], isT=d.getTime()===today.getTime();
     const shifts=(data.days&&data.days[i])||[];
-    const hrs=Math.round(shifts.reduce((a,s)=>a+s.hrs,0)*100)/100;
-    const dpay=shifts.reduce((a,s)=>{ const j=jobs.find(x=>x.id===s.jid); return a+(j?s.hrs*j.rate:0); },0);
+    const hrs=Math.round(shifts.reduce((a,s)=>a+netHrs(s),0)*100)/100;
+    const dpay=shifts.reduce((a,s)=>{ const j=jobs.find(x=>x.id===s.jid); return a+(j?netHrs(s)*j.rate:0); },0);
     const isOp=open.has(i)||(wOff===0&&isT);
     const card=document.createElement('div');
     card.className='day-card'+(isT?' tc':'')+(isOp?' op':'');
@@ -606,12 +717,47 @@ function renderDays() {
     const shHtml=shifts.length===0
       ?'<div class="no-sh">No shifts yet — log one below</div>'
       :shifts.map(sh=>{ const j=jobs.find(x=>x.id===sh.jid)||{};
-        return `<div class="sh-row">
-          <div class="sh-dot" style="background:${j.color||'#999'}"></div>
-          <div class="sh-i"><div class="sh-times">${sh.s} → ${sh.e}</div><div class="sh-job">${j.emoji||''} ${j.name||'Unknown'}</div></div>
-          <div class="sh-dur">${sh.hrs.toFixed(2)}h</div>
-          <div class="sh-pay">$${(sh.hrs*(j.rate||0)).toFixed(2)}</div>
-          <button class="sh-del" onclick="removeShift(${i},${sh.id})">✕</button>
+        const net=netHrs(sh);
+        const totalBreakMins=(sh.breaks||[]).reduce((a,b)=>a+b.mins,0);
+        const breakBadge=totalBreakMins>0?`<span class="sh-break-badge">−${totalBreakMins}m break</span>`:'';
+        const breaksHtml=(sh.breaks||[]).length===0
+          ?'<div style="font-size:11px;color:var(--muted);padding:4px 0">No breaks added yet.</div>'
+          :(sh.breaks||[]).map(b=>`
+            <div class="break-row">
+              <div class="break-icon">☕</div>
+              <div class="break-info">
+                <div class="break-times">${b.bs} → ${b.be}</div>
+                <div class="break-label">${b.label}</div>
+              </div>
+              <div class="break-dur">−${b.mins}m</div>
+              <button class="break-del" onclick="removeBreak(${i},${sh.id},${b.id})">✕</button>
+            </div>`).join('');
+        return `<div class="sh-row" style="flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="sh-dot" style="background:${j.color||'#999'}"></div>
+            <div class="sh-i">
+              <div class="sh-times">${sh.s} → ${sh.e}${breakBadge}</div>
+              <div class="sh-job">${j.emoji||''} ${j.name||'Unknown'}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="sh-dur">${net.toFixed(2)}h</div>
+              <div class="sh-pay">$${(net*(j.rate||0)).toFixed(2)}</div>
+            </div>
+            <button class="sh-del" onclick="removeShift(${i},${sh.id})">✕</button>
+          </div>
+          <div style="width:100%;padding-left:18px">
+            <button class="break-toggle" onclick="toggleBreakSection(${sh.id})">☕ Breaks ${totalBreakMins>0?'('+totalBreakMins+'m)':''}</button>
+            <div id="break-sec-${sh.id}" class="break-section" style="display:none">
+              <div class="break-section-title">☕ Rest / Lunch Breaks <span style="margin-left:auto;font-size:10px;font-weight:400;color:var(--muted)">deducted from paid hours</span></div>
+              <div class="break-list">${breaksHtml}</div>
+              <div class="add-break-row">
+                <div class="ff"><label>Break Start</label><input type="time" id="bst-${sh.id}" style="width:100px"></div>
+                <div class="ff"><label>Break End</label><input type="time" id="ben-${sh.id}" style="width:100px"></div>
+                <div class="ff"><label>Label</label><input type="text" id="blbl-${sh.id}" placeholder="Lunch" style="width:90px"></div>
+                <button class="add-break-btn" onclick="addBreak(${i},${sh.id})">+ Add Break</button>
+              </div>
+            </div>
+          </div>
         </div>`; }).join('');
     const jOpts=jobs.length===0
       ?'<option value="">No jobs — add one in Jobs tab</option>'
@@ -656,13 +802,53 @@ function renderJobsPanel() {
     c.innerHTML=`
       <div class="j-icon" style="background:${j.color}20;border:2px solid ${j.color}50">${j.emoji}</div>
       <div class="j-info"><div class="j-name">${j.name}</div><div class="j-rate-txt">$${j.rate}/hr</div></div>
-      <input class="j-rate-inp" type="number" value="${j.rate}" min="0" step="0.5" onchange="updRate('${j.id}',this.value)" title="Edit rate">
+      <button class="j-edit-btn" onclick="openEditModal('${j.id}')">✏️ Edit</button>
       <button class="j-del" onclick="delJob('${j.id}')">🗑</button>`;
     list.appendChild(c);
   });
   document.getElementById('emojiPick').innerHTML=EMOJIS.map(e=>`<div class="e-opt${e===pEmoji?' on':''}" onclick="pickE('${e}',this)">${e}</div>`).join('');
   document.getElementById('colorPick').innerHTML=COLORS.map(c=>`<div class="c-opt${c===pColor?' on':''}" style="background:${c}" onclick="pickC('${c}',this)"></div>`).join('');
 }
+
+// ── edit modal ──
+let editingJobId=null, editEmoji=EMOJIS[0], editColor=COLORS[0];
+
+window.openEditModal = function(id) {
+  const j=jobs.find(x=>x.id===id); if(!j) return;
+  editingJobId=id; editEmoji=j.emoji; editColor=j.color;
+  document.getElementById('editName').value=j.name;
+  document.getElementById('editRate').value=j.rate;
+  document.getElementById('editEmojiPick').innerHTML=
+    EMOJIS.map(e=>`<div class="modal-e-opt${e===editEmoji?' on':''}" onclick="pickEditE('${e}',this)">${e}</div>`).join('');
+  document.getElementById('editColorPick').innerHTML=
+    COLORS.map(c=>`<div class="modal-c-opt${c===editColor?' on':''}" style="background:${c}" onclick="pickEditC('${c}',this)"></div>`).join('');
+  document.getElementById('editModal').classList.remove('h');
+};
+
+window.closeModal = function() { document.getElementById('editModal').classList.add('h'); };
+window.closeEditModal = function(e) { if(e.target===document.getElementById('editModal')) closeModal(); };
+
+window.pickEditE = function(e,el) {
+  editEmoji=e;
+  document.querySelectorAll('#editEmojiPick .modal-e-opt').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+};
+window.pickEditC = function(c,el) {
+  editColor=c;
+  document.querySelectorAll('#editColorPick .modal-c-opt').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+};
+
+window.saveEditJob = async function() {
+  const name=document.getElementById('editName').value.trim();
+  const rate=parseFloat(document.getElementById('editRate').value);
+  if(!name||isNaN(rate)) return alert('Please enter a name and rate.');
+  setSync('ing','Saving...');
+  await updateDoc(doc(db,'users',currentUid,'jobs',editingJobId),{
+    name, rate, emoji:editEmoji, color:editColor
+  });
+  closeModal();
+};
 
 // ── tabs ──
 window.showTab = function(t) {
