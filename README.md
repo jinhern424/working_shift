@@ -121,6 +121,7 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/esp_wheel -b 115200
 ```
 ```bash
 ros2 topic echo /wheel_status
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/Twist "{linear: {x: 0.3}, angular: {z: 0.0}}"
 ```
 ```bash
 ros2 topic pub --rate 10 /cmd_vel geometry_msgs/Twist "{linear: {x: 0.3}, angular: {z: 0.0}}"
