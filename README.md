@@ -66,6 +66,7 @@ ros2 topic pub --once /pump_cmd std_msgs/Int32 "data: 1000"
 # emergency stop
 ros2 topic pub --once /pump_cmd std_msgs/Int32 "data: 0"
 ```
+
 ### stepper motor
 #### Foxglove Setup
 
@@ -112,4 +113,15 @@ ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 9999.0, y: 0.0, z:
 ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 100.0, y: 100.0, z: 0.0}"
 ros2 topic echo /xy_status
 # should print: "move rejected: homing not done"
+```
+
+### Wheel
+```bash
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/esp_wheel -b 115200
+```
+```bash
+ros2 topic echo /wheel_status
+```
+```bash
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/Twist "{linear: {x: 0.3}, angular: {z: 0.0}}"
 ```
