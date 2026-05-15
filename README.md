@@ -36,18 +36,36 @@ ros2 topic pub /main_state std_msgs/msg/String "data: homing"
 | Button | `/cam_control` | `std_msgs/String` | `{"data": "down"}` |
 | Slider/Input | `/pump_cmd` | `std_msgs/Int32` | `{"data": 2000}` |
 
+#### To start
 ```bash
-# Move cam up
-ros2 topic pub --once /cam_control std_msgs/msg/String "data: 'up'"
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/esp_cam -b 115200
+ros2 topic echo /pump_status
+ros2 topic echo /cam_status
+```
+#### Cam
+```bash
+# First move — toggle establishes known position
+ros2 topic pub --once /cam_control std_msgs/String "data: 'toggle'"
 
-# Move cam down
-ros2 topic pub --once /cam_control std_msgs/msg/String "data: 'down'"
+# Now reliable directional commands work
+ros2 topic pub --once /cam_control std_msgs/String "data: 'down'"
+ros2 topic pub --once /cam_control std_msgs/String "data: 'up'"
+
+# Emergency stop if it jams
+ros2 topic pub --once /cam_control std_msgs/String "data: 'stop'"
 
 # Cam up, then pump runs for 3 seconds
-ros2 topic pub --once /cam_control std_msgs/msg/String "data: 'up'"
 ros2 topic pub --once /pump_cmd std_msgs/msg/Int32 "data: 3000"
 ```
 
+#### Pump
+```bash
+# 1-second pulse
+ros2 topic pub --once /pump_cmd std_msgs/Int32 "data: 1000"
+
+# emergency stop
+ros2 topic pub --once /pump_cmd std_msgs/Int32 "data: 0"
+```
 ### stepper motor
 #### Foxglove Setup
 
@@ -72,11 +90,11 @@ ros2 topic echo /xy_status
 ros2 topic echo /xy_minmax
 
 ## Step 1 — Home first (always do this before moving):
-bashros2 topic pub --once /main_state std_msgs/msg/String "data: 'homing'"
+ros2 topic pub --once /main_state std_msgs/msg/String "data: 'homing'"
 Watch /xy_status — should go homing → available, and /change_main_state should publish free.
 
 ## Step 2 — Test small moves:
-bash# Move to x=100, y=50 (in steps)
+#Move to x=100, y=50 (in steps)
 ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 100.0, y: 50.0, z: 0.0}"
 
 # Move to x=-200, y=100
@@ -90,7 +108,7 @@ ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 0.0, y: 0.0, z: 0.
 ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 9999.0, y: 0.0, z: 0.0}"
 
 ## Step 4 — Test move rejection before homing:
-bash# Restart ESP32, then immediately try to move (should reject)
+#Restart ESP32, then immediately try to move (should reject)
 ros2 topic pub --once /target_xy geometry_msgs/msg/Point "{x: 100.0, y: 100.0, z: 0.0}"
 ros2 topic echo /xy_status
 # should print: "move rejected: homing not done"
