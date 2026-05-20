@@ -36,9 +36,11 @@ nano ./scripts/reinforcement_learning/rsl_rl/play.py
 from isaaclab_tasks.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
 ```
 
+### TRAIN
 ```bash
 python ./scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Open-Drawer-OpenArm-v0 --num_envs 2048 --headless
 ```
+
 ### To find the training files
 ```bash
 ls
