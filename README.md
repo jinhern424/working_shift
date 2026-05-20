@@ -41,7 +41,13 @@ python ./scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Open-Drawer
 ```
 ### To find the training files
 ```bash
-ls ./scripts/reinforcement_learning/rsl_rl/logs/
+ls
+cd logs
+ls
+cd rsl_rl
+ls
+cd openarm_open_drawer
+ls # get the file name
 ```
 ### To see the result
 ```bash
