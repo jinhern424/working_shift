@@ -599,6 +599,25 @@ async function startApp(){
   loadPrefs(); applyPrefs();
   renderNav(); listenJobs(); listenWeek();
   setTimeout(()=>{document.getElementById('loadScreen').style.display='none';document.getElementById('appShell').style.display='block';},1000);
+
+  // ── DEBUG: fetch all weeks and log them ──
+  try {
+    const snap = await getDocs(collection(db,'users',currentUid,'weeks'));
+    console.log('=== DEBUG: uid =', currentUid);
+    console.log('=== DEBUG: current wKey =', wKey());
+    console.log('=== DEBUG: weeks found in Firestore:', snap.size);
+    snap.forEach(d => console.log('  week doc:', d.id, '| days keys:', Object.keys(d.data().days||{})));
+    if(snap.size===0) console.warn('=== DEBUG: NO WEEKS FOUND — check uid matches Firestore');
+
+    // Show debug banner in app
+    const banner = document.createElement('div');
+    banner.id='debug-banner';
+    banner.style.cssText='position:fixed;bottom:90px;left:0;right:0;background:#1e293b;color:#94a3b8;font-size:11px;font-family:monospace;padding:8px 14px;z-index:999;max-height:120px;overflow-y:auto';
+    banner.innerHTML = '<b style="color:#38bdf8">DEBUG</b> uid: '+currentUid.slice(0,12)+'... | wKey: '+wKey()+' | weeks in DB: '+snap.size+' ('+snap.docs.map(d=>d.id).join(', ')+') <button onclick="document.getElementById('debug-banner').remove()" style="margin-left:10px;background:#334155;border:none;color:#94a3b8;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button>';
+    document.body.appendChild(banner);
+  } catch(e) {
+    console.error('=== DEBUG ERROR:', e);
+  }
 }
 
 // ── listeners ──
