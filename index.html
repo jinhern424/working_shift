@@ -612,9 +612,10 @@ function listenJobs(){
 }
 function listenWeek(){
   if(unsubWeek)unsubWeek();
-  unsubWeek=onSnapshot(weekDoc(),snap=>{
+  const k=wKey();
+  unsubWeek=onSnapshot(weekDoc(k),snap=>{
     const data=snap.exists()?snap.data():{cap:20,days:{}};
-    weeksCache[wKey()]=data;
+    weeksCache[k]=data;
     document.getElementById('capInp').value=data.cap||20;
     renderStats();renderDays();
     setSync('ok','Synced ✓');
@@ -938,26 +939,22 @@ async function renderHistory(){
   const filterJob=document.getElementById('hFilterJob').value;
   const filterWeeks=document.getElementById('hFilterWeek').value;
 
-  // gather weeks to show
+  // gather weeks to show — always fetch fresh from Firestore
   const weeksToLoad=[];
-  if(filterWeeks==='all'){
-    // load all week docs
-    const snap=await getDocs(collection(db,'users',currentUid,'weeks'));
-    snap.forEach(d=>weeksToLoad.push({key:d.id,data:d.data()}));
-  } else {
+  const allWeeksSnap=await getDocs(collection(db,'users',currentUid,'weeks'));
+  allWeeksSnap.forEach(d=>{
+    weeksCache[d.id]=d.data(); // keep cache updated
+    weeksToLoad.push({key:d.id,data:d.data()});
+  });
+  // if filtering by number of weeks, filter down
+  if(filterWeeks!=='all'){
     const n=parseInt(filterWeeks);
-    for(let i=0;i<n;i++){
-      const k=wKey(-i);
-      const data=weeksCache[k];
-      if(data) weeksToLoad.push({key:k,data});
-      else{
-        // fetch if not cached
-        try{
-          const snap=await getDocs(query(collection(db,'users',currentUid,'weeks')));
-          // already loaded above
-        }catch(e){}
-      }
-    }
+    // keep only weeks within the last n weeks
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-n*7);
+    weeksToLoad.splice(0,weeksToLoad.length,...weeksToLoad.filter(({key})=>{
+      const [yr,mo,dy]=key.split('-').map(Number);
+      return new Date(yr,mo-1,dy)>=cutoff;
+    }));
   }
 
   // flatten all shifts
