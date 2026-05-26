@@ -526,16 +526,21 @@ const jobsCol=()=>collection(db,'users',currentUid,'jobs');
 const weekDoc=(k=wKey())=>doc(db,'users',currentUid,'weeks',k);
 
 // ── helpers ──
-// Week anchor = Sunday (matches Firestore storage).
-// wKey returns the Sunday date string as the week document ID.
-// wDates returns [Mon,Tue,Wed,Thu,Fri,Sat,Sun] for display (anchor+1 .. anchor+7).
-// displayToStore maps display slot i to Firestore day index:
-//   display 0(Mon)->store 1, 1(Tue)->2, 2(Wed)->3, 3(Thu)->4, 4(Fri)->5, 5(Sat)->6, 6(Sun)->0
-function getSunday(d){const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay());return dt;}
-function getMon(d){return getSunday(d);} // alias kept for compatibility
-function wKey(off=wOff){const s=getSunday(new Date());s.setDate(s.getDate()+off*7);return s.getFullYear()+'-'+String(s.getMonth()+1).padStart(2,'0')+'-'+String(s.getDate()).padStart(2,'0');}
-function wDates(off=wOff){const s=getSunday(new Date());s.setDate(s.getDate()+off*7);return [1,2,3,4,5,6,7].map(o=>{const d=new Date(s);d.setDate(s.getDate()+o);return d;});}
-function displayToStore(i){return i===6?0:i+1;}
+// Week key = Monday (Firestore docs are now Monday-keyed: 2026-05-04, 2026-05-11 etc)
+// Display: Mon(0)...Sun(6), storage index = display index directly
+function getMonday(d){
+  const dt=new Date(d);dt.setHours(0,0,0,0);
+  const day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));return dt;
+}
+function wKey(off=wOff){
+  const m=getMonday(new Date());m.setDate(m.getDate()+off*7);
+  return m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'-'+String(m.getDate()).padStart(2,'0');
+}
+function wDates(off=wOff){
+  const m=getMonday(new Date());m.setDate(m.getDate()+off*7);
+  return DNAMES.map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});
+}
+function displayToStore(i){return i;}
 function fmt(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});}
 function fmtDate(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});}
 
@@ -621,13 +626,9 @@ function listenJobs(){
 function listenWeek(){
   if(unsubWeek)unsubWeek();
   const k=wKey();
-  console.log('listenWeek: subscribing to key=',k,'wOff=',wOff);
   unsubWeek=onSnapshot(weekDoc(k),snap=>{
-    console.log('listenWeek snapshot: exists=',snap.exists(),'key=',k);
     const data=snap.exists()?snap.data():{cap:20,days:{}};
-    console.log('listenWeek data days keys=',Object.keys(data.days||{}));
     weeksCache[k]=data;
-    window._debugCache=weeksCache; // expose for console debugging
     document.getElementById('capInp').value=data.cap||20;
     renderStats();renderDays();
     setSync('ok','Synced ✓');
