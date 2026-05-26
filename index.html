@@ -501,7 +501,7 @@ const fbApp = initializeApp({
 const db=getFirestore(fbApp), auth=getAuth(fbApp);
 
 // ── constants ──
-const DNAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DNAMES=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const EMOJIS=['💼','📚','☕','🏫','🏪','🍽️','🖥️','🏥','📦','✏️','🎓','🔧'];
 const COLORS=['#2d7d52','#2563a8','#c85c2d','#7c3aed','#be185d','#b45309','#0e7490','#374151','#dc2626','#0891b2'];
 
@@ -526,7 +526,7 @@ const jobsCol=()=>collection(db,'users',currentUid,'jobs');
 const weekDoc=(k=wKey())=>doc(db,'users',currentUid,'weeks',k);
 
 // ── helpers ──
-function getMon(d){const dt=new Date(d);dt.setHours(0,0,0,0);const day=dt.getDay();dt.setDate(dt.getDate()-day);return dt;} // week starts Sunday to match stored data
+function getMon(d){const dt=new Date(d);dt.setHours(0,0,0,0);const day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));return dt;} // week starts Monday
 function wKey(off=wOff){const m=getMon(new Date());m.setDate(m.getDate()+off*7);return m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'-'+String(m.getDate()).padStart(2,'0');}
 function wDates(off=wOff){const m=getMon(new Date());m.setDate(m.getDate()+off*7);return DNAMES.map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});}
 function fmt(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});}
@@ -594,8 +594,47 @@ onAuthStateChanged(auth,user=>{
   else{document.getElementById('loadScreen').style.display='none';document.getElementById('appShell').style.display='none';document.getElementById('loginScreen').style.display='flex';}
 });
 
+// ── Migrate old Sunday-based week keys to Monday-based ──
+async function migrateSundayWeeks(){
+  try {
+    const snap = await getDocs(collection(db,'users',currentUid,'weeks'));
+    for(const weekDocSnap of snap.docs){
+      const key = weekDocSnap.id;
+      const [yr,mo,dy] = key.split('-').map(Number);
+      const dt = new Date(yr,mo-1,dy);
+      // If this week key is a Sunday (getDay()===0), migrate it
+      if(dt.getDay()===0){
+        const data = weekDocSnap.data();
+        // New Monday key = Sunday + 1 day
+        const mon = new Date(yr,mo-1,dy+1);
+        const newKey = mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
+        // Remap days: old index 0=Sun->new index 6, old 1=Mon->new 0, ..., old 6=Sat->new 5
+        const oldDays = data.days||{};
+        const newDays = {};
+        // old 1(Mon)->0, 2(Tue)->1, 3(Wed)->2, 4(Thu)->3, 5(Fri)->4, 6(Sat)->5, 0(Sun)->6
+        const remap = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+        Object.entries(oldDays).forEach(([di,shifts])=>{
+          const newDi = remap[parseInt(di)];
+          if(newDi!==undefined && shifts && shifts.length>0) newDays[newDi]=shifts;
+        });
+        const newData = {...data, days:newDays};
+        // Save under new Monday key
+        await setDoc(doc(db,'users',currentUid,'weeks',newKey), newData);
+        // Delete old Sunday key
+        await deleteDoc(doc(db,'users',currentUid,'weeks',key));
+        console.log('Migrated week', key, '->', newKey);
+        weeksCache[newKey]=newData;
+      }
+    }
+    console.log('Migration complete');
+  } catch(e){
+    console.error('Migration error:',e);
+  }
+}
+
 async function startApp(){
   loadPrefs(); applyPrefs();
+  await migrateSundayWeeks(); // migrate old Sunday-based weeks to Monday-based
   renderNav(); listenJobs(); listenWeek();
   setTimeout(()=>{document.getElementById('loadScreen').style.display='none';document.getElementById('appShell').style.display='block';},1000);
 
