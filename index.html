@@ -621,13 +621,17 @@ function listenJobs(){
 function listenWeek(){
   if(unsubWeek)unsubWeek();
   const k=wKey();
+  console.log('listenWeek: subscribing to key=',k,'wOff=',wOff);
   unsubWeek=onSnapshot(weekDoc(k),snap=>{
+    console.log('listenWeek snapshot: exists=',snap.exists(),'key=',k);
     const data=snap.exists()?snap.data():{cap:20,days:{}};
+    console.log('listenWeek data days keys=',Object.keys(data.days||{}));
     weeksCache[k]=data;
+    window._debugCache=weeksCache; // expose for console debugging
     document.getElementById('capInp').value=data.cap||20;
     renderStats();renderDays();
     setSync('ok','Synced ✓');
-  },err=>{console.error(err);setSync('err','Offline');});
+  },err=>{console.error('listenWeek error:',err);setSync('err','Offline');});
 }
 async function saveWeek(data,k=wKey()){
   setSync('ing','Saving...');weeksCache[k]=data;await setDoc(weekDoc(k),data);
