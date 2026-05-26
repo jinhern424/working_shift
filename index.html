@@ -526,16 +526,9 @@ const jobsCol=()=>collection(db,'users',currentUid,'jobs');
 const weekDoc=(k=wKey())=>doc(db,'users',currentUid,'weeks',k);
 
 // ── helpers ──
-// Week anchor = Sunday (matches Firestore storage).
-// wKey returns the Sunday date string as the week document ID.
-// wDates returns [Mon,Tue,Wed,Thu,Fri,Sat,Sun] for display (anchor+1 .. anchor+7).
-// displayToStore maps display slot i to Firestore day index:
-//   display 0(Mon)->store 1, 1(Tue)->2, 2(Wed)->3, 3(Thu)->4, 4(Fri)->5, 5(Sat)->6, 6(Sun)->0
-function getSunday(d){const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay());return dt;}
-function getMon(d){return getSunday(d);} // alias kept for compatibility
-function wKey(off=wOff){const s=getSunday(new Date());s.setDate(s.getDate()+off*7);return s.getFullYear()+'-'+String(s.getMonth()+1).padStart(2,'0')+'-'+String(s.getDate()).padStart(2,'0');}
-function wDates(off=wOff){const s=getSunday(new Date());s.setDate(s.getDate()+off*7);return [1,2,3,4,5,6,7].map(o=>{const d=new Date(s);d.setDate(s.getDate()+o);return d;});}
-function displayToStore(i){return i===6?0:i+1;}
+function getMon(d){const dt=new Date(d);dt.setHours(0,0,0,0);const day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));return dt;}
+function wKey(off=wOff){const m=getMon(new Date());m.setDate(m.getDate()+off*7);return m.toISOString().slice(0,10);}
+function wDates(off=wOff){const m=getMon(new Date());m.setDate(m.getDate()+off*7);return DNAMES.map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});}
 function fmt(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});}
 function fmtDate(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});}
 
@@ -605,8 +598,6 @@ async function startApp(){
   loadPrefs(); applyPrefs();
   renderNav(); listenJobs(); listenWeek();
   setTimeout(()=>{document.getElementById('loadScreen').style.display='none';document.getElementById('appShell').style.display='block';},1000);
-
-
 }
 
 // ── listeners ──
@@ -620,18 +611,13 @@ function listenJobs(){
 }
 function listenWeek(){
   if(unsubWeek)unsubWeek();
-  const k=wKey();
-  console.log('listenWeek: subscribing to key=',k,'wOff=',wOff);
-  unsubWeek=onSnapshot(weekDoc(k),snap=>{
-    console.log('listenWeek snapshot: exists=',snap.exists(),'key=',k);
+  unsubWeek=onSnapshot(weekDoc(),snap=>{
     const data=snap.exists()?snap.data():{cap:20,days:{}};
-    console.log('listenWeek data days keys=',Object.keys(data.days||{}));
-    weeksCache[k]=data;
-    window._debugCache=weeksCache; // expose for console debugging
+    weeksCache[wKey()]=data;
     document.getElementById('capInp').value=data.cap||20;
     renderStats();renderDays();
     setSync('ok','Synced ✓');
-  },err=>{console.error('listenWeek error:',err);setSync('err','Offline');});
+  },err=>{console.error(err);setSync('err','Offline');});
 }
 async function saveWeek(data,k=wKey()){
   setSync('ing','Saving...');weeksCache[k]=data;await setDoc(weekDoc(k),data);
@@ -655,11 +641,10 @@ window.handleAdd=async function(di){
   if(hrs<=0)return alert('End time must be after start time.');
   const btn=document.getElementById('addbtn-'+di);
   if(btn)btn.disabled=true;
-  const si=displayToStore(di); // convert display index to storage index
   const k=wKey(),data=weeksCache[k]||{cap:20,days:{}};
   if(!data.days)data.days={};
-  if(!data.days[si])data.days[si]=[];
-  data.days[si].push({id:Date.now(),s,e,hrs,jid,desc,breaks:[]});
+  if(!data.days[di])data.days[di]=[];
+  data.days[di].push({id:Date.now(),s,e,hrs,jid,desc,breaks:[]});
   await saveWeek(data,k);
   // clear form
   document.getElementById('st-'+di).value='';
@@ -670,19 +655,17 @@ window.handleAdd=async function(di){
 
 // ── remove shift ──
 window.removeShift=async function(di,id){
-  const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
-  if(!data||!data.days||!data.days[si])return;
-  data.days[si]=data.days[si].filter(x=>x.id!==id);
+  if(!data||!data.days||!data.days[di])return;
+  data.days[di]=data.days[di].filter(x=>x.id!==id);
   await saveWeek(data,k);
 };
 
 // ── edit shift modal ──
 window.openEditShift=function(di,shiftId){
-  const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
-  if(!data||!data.days||!data.days[si])return;
-  const sh=data.days[si].find(x=>x.id===shiftId);if(!sh)return;
+  if(!data||!data.days||!data.days[di])return;
+  const sh=data.days[di].find(x=>x.id===shiftId);if(!sh)return;
   editingShift={di,shiftId};
   document.getElementById('eShiftStart').value=sh.s;
   document.getElementById('eShiftEnd').value=sh.e;
@@ -700,9 +683,8 @@ window.saveEditShift=async function(){
   const desc=document.getElementById('eShiftDesc').value.trim();
   if(!s||!e)return alert('Please enter both times.');
   const hrs=tdiff(s,e);if(hrs<=0)return alert('End must be after start.');
-  const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
-  const sh=data.days[si].find(x=>x.id===shiftId);if(!sh)return;
+  const sh=data.days[di].find(x=>x.id===shiftId);if(!sh)return;
   sh.s=s;sh.e=e;sh.hrs=hrs;sh.jid=jid;sh.desc=desc;
   await saveWeek(data,k);
   closeModal('editShiftModal');
@@ -717,9 +699,8 @@ window.addBreak=async function(di,shiftId){
   const minsVal=parseInt(document.getElementById('bm-'+shiftId).value);
   const lbl=document.getElementById('bl-'+shiftId).value.trim()||'Break';
   if(!minsVal||minsVal<=0)return alert('Enter break duration in minutes.');
-  const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
-  const sh=data.days[si].find(x=>x.id===shiftId);if(!sh)return;
+  const sh=data.days[di].find(x=>x.id===shiftId);if(!sh)return;
   if(!sh.breaks)sh.breaks=[];
   const totalBreak=(sh.breaks.reduce((a,b)=>a+b.mins,0)+minsVal);
   if(totalBreak>=sh.hrs*60)return alert('Total break time cannot exceed shift length.');
@@ -727,9 +708,8 @@ window.addBreak=async function(di,shiftId){
   await saveWeek(data,k);
 };
 window.removeBreak=async function(di,shiftId,breakId){
-  const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
-  const sh=data.days[si].find(x=>x.id===shiftId);if(!sh||!sh.breaks)return;
+  const sh=data.days[di].find(x=>x.id===shiftId);if(!sh||!sh.breaks)return;
   sh.breaks=sh.breaks.filter(b=>b.id!==breakId);
   await saveWeek(data,k);
 };
@@ -812,8 +792,7 @@ function renderStats(){
   const cap=data.cap||20;
   let hrs=0,pay=0,shCnt=0;
   for(let i=0;i<7;i++){
-    const si=displayToStore(i);
-    const shifts=(data.days&&data.days[si])||[];
+    const shifts=(data.days&&data.days[i])||[];
     shifts.forEach(sh=>{const net=netHrs(sh);hrs+=net;shCnt++;const j=jobs.find(x=>x.id===sh.jid);if(j)pay+=net*j.rate;});
   }
   hrs=Math.round(hrs*100)/100;
@@ -841,8 +820,7 @@ function renderDays(){
   list.innerHTML='';
   DNAMES.forEach((dn,i)=>{
     const d=dd[i],isT=d.getTime()===today.getTime();
-    const si=displayToStore(i); // Firestore storage index
-    const shifts=(data.days&&data.days[si])||[];
+    const shifts=(data.days&&data.days[i])||[];
     const dayNetHrs=Math.round(shifts.reduce((a,s)=>a+netHrs(s),0)*100)/100;
     const dayBreakMins=shifts.reduce((a,s)=>a+(s.breaks||[]).reduce((x,b)=>x+b.mins,0),0);
     const dpay=shifts.reduce((a,s)=>{const j=jobs.find(x=>x.id===s.jid);return a+(j?netHrs(s)*j.rate:0);},0);
@@ -959,38 +937,38 @@ async function renderHistory(){
   const filterJob=document.getElementById('hFilterJob').value;
   const filterWeeks=document.getElementById('hFilterWeek').value;
 
-  // gather weeks to show — always fetch fresh from Firestore
+  // gather weeks to show
   const weeksToLoad=[];
-  const allWeeksSnap=await getDocs(collection(db,'users',currentUid,'weeks'));
-  allWeeksSnap.forEach(d=>{
-    weeksCache[d.id]=d.data(); // keep cache updated
-    weeksToLoad.push({key:d.id,data:d.data()});
-  });
-  // if filtering by number of weeks, filter down
-  if(filterWeeks!=='all'){
+  if(filterWeeks==='all'){
+    // load all week docs
+    const snap=await getDocs(collection(db,'users',currentUid,'weeks'));
+    snap.forEach(d=>weeksToLoad.push({key:d.id,data:d.data()}));
+  } else {
     const n=parseInt(filterWeeks);
-    // keep only weeks within the last n weeks
-    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-n*7);
-    weeksToLoad.splice(0,weeksToLoad.length,...weeksToLoad.filter(({key})=>{
-      const [yr,mo,dy]=key.split('-').map(Number);
-      return new Date(yr,mo-1,dy)>=cutoff;
-    }));
+    for(let i=0;i<n;i++){
+      const k=wKey(-i);
+      const data=weeksCache[k];
+      if(data) weeksToLoad.push({key:k,data});
+      else{
+        // fetch if not cached
+        try{
+          const snap=await getDocs(query(collection(db,'users',currentUid,'weeks')));
+          // already loaded above
+        }catch(e){}
+      }
+    }
   }
 
   // flatten all shifts
   let allShifts=[];
   weeksToLoad.forEach(({key,data})=>{
     if(!data||!data.days)return;
-    // Parse week key in LOCAL time to avoid UTC midnight shifting the date
-    const [yr,mo,dy]=key.split('-').map(Number);
+    const mon=new Date(key+'T00:00:00');
     Object.entries(data.days).forEach(([di,shifts])=>{
-      const diNum=parseInt(di);
-      const d=new Date(yr,mo-1,dy+diNum); // local date, no UTC offset issue
+      const d=new Date(mon);d.setDate(mon.getDate()+parseInt(di));
       (shifts||[]).forEach(sh=>{
         if(filterJob&&sh.jid!==filterJob)return;
-        // storage index to display name: 0=Sun->6, 1=Mon->0 ... 6=Sat->5
-        const displayIdx = diNum===0 ? 6 : diNum-1;
-        allShifts.push({...sh,date:d,weekKey:key,di:diNum,dayName:DNAMES[displayIdx]});
+        allShifts.push({...sh,date:d,weekKey:key,di:parseInt(di)});
       });
     });
   });
@@ -1028,7 +1006,7 @@ async function renderHistory(){
       const breakMins=(sh.breaks||[]).reduce((a,b)=>a+b.mins,0);
       return `<div class="h-shift-row">
         <div class="h-left">
-          <div class="h-date">${fmtDate(sh.date)} · ${sh.dayName}</div>
+          <div class="h-date">${fmtDate(sh.date)} · ${DNAMES[sh.di]}</div>
           <div class="h-times">${fmtTime(sh.s)} → ${fmtTime(sh.e)}${breakMins>0?' <span style="font-size:10px;color:var(--warn)">−'+breakMins+'m break</span>':''}</div>
           ${sh.desc?`<div class="h-desc">"${sh.desc}"</div>`:''}
         </div>
