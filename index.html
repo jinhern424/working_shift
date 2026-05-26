@@ -540,7 +540,7 @@ function wDates(off=wOff){
   const m=getMonday(new Date());m.setDate(m.getDate()+off*7);
   return DNAMES.map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});
 }
-function displayToStore(i){return i;}
+function displayToStore(i){return (i+6)%7;}
 function fmt(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});}
 function fmtDate(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});}
 
