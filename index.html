@@ -462,8 +462,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <button class="modal-close" onclick="closeModal('editShiftModal')">✕</button>
       </div>
       <div class="modal-row">
-        <div class="modal-field"><label>Start Time</label><input type="time" id="eShiftStart"></div>
-        <div class="modal-field"><label>End Time</label><input type="time" id="eShiftEnd"></div>
+        <div class="modal-field"><label>Start Time</label><select id="eShiftStart" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);outline:none;width:100%;cursor:pointer"></select></div>
+        <div class="modal-field"><label>End Time</label><select id="eShiftEnd" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);outline:none;width:100%;cursor:pointer"></select></div>
       </div>
       <div class="modal-field"><label>Job</label>
         <select id="eShiftJob" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);outline:none;width:100%;cursor:pointer"></select>
@@ -651,7 +651,7 @@ window.handleAdd=async function(di){
   const e=document.getElementById('en-'+di).value;
   const jid=document.getElementById('js-'+di).value;
   const desc=document.getElementById('desc-'+di).value.trim();
-  if(!s||!e)return alert('Please enter both start and end time.');
+  if(!s||!e||s==='--:--'||e==='--:--')return alert('Please select both start and end time.');
   const hrs=tdiff(s,e);
   if(hrs<=0)return alert('End time must be after start time.');
   const btn=document.getElementById('addbtn-'+di);
@@ -685,8 +685,9 @@ window.openEditShift=function(di,shiftId){
   if(!data||!data.days||!data.days[si])return;
   const sh=data.days[si].find(x=>x.id===shiftId);if(!sh)return;
   editingShift={di,shiftId};
-  document.getElementById('eShiftStart').value=sh.s;
-  document.getElementById('eShiftEnd').value=sh.e;
+  // Populate selects with time options then set value
+  document.getElementById('eShiftStart').innerHTML=timeOpts(sh.s);
+  document.getElementById('eShiftEnd').innerHTML=timeOpts(sh.e);
   document.getElementById('eShiftDesc').value=sh.desc||'';
   const jSel=document.getElementById('eShiftJob');
   jSel.innerHTML=jobs.map(j=>`<option value="${j.id}"${j.id===sh.jid?' selected':''}>${j.emoji} ${j.name} ($${j.rate}/hr)</option>`).join('');
@@ -699,7 +700,7 @@ window.saveEditShift=async function(){
   const e=document.getElementById('eShiftEnd').value;
   const jid=document.getElementById('eShiftJob').value;
   const desc=document.getElementById('eShiftDesc').value.trim();
-  if(!s||!e)return alert('Please enter both times.');
+  if(!s||!e||s==='--:--'||e==='--:--')return alert('Please select both times.');
   const hrs=tdiff(s,e);if(hrs<=0)return alert('End must be after start.');
   const si=displayToStore(di);
   const k=wKey(),data=weeksCache[k];
@@ -801,6 +802,18 @@ function applyPrefs(){
 }
 
 // ── render nav ──
+// Generate 15-minute interval time options
+function timeOpts(selected=''){
+  let html='<option value="">--:--</option>';
+  for(let h=0;h<24;h++){
+    for(let m of [0,15,30,45]){
+      const val=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+      html+=`<option value="${val}"${val===selected?' selected':''}>${fmtTime(val)}</option>`;
+    }
+  }
+  return html;
+}
+
 function renderNav(){
   const dd=wDates();
   document.getElementById('wkRange').textContent=`${fmt(dd[0])} – ${fmt(dd[6])}`;
@@ -935,8 +948,8 @@ function renderDays(){
           <div class="add-form-title">Log a Shift</div>
           <div class="f-row">
             <div class="ff"><label>Job</label><select id="js-${i}">${jOpts}</select></div>
-            <div class="ff"><label>Start</label><input type="time" id="st-${i}"></div>
-            <div class="ff"><label>End</label><input type="time" id="en-${i}"></div>
+            <div class="ff"><label>Start</label><select id="st-${i}">${timeOpts()}</select></div>
+            <div class="ff"><label>End</label><select id="en-${i}">${timeOpts()}</select></div>
           </div>
           <div class="ff f-full" style="margin-top:10px"><label>Notes / Description (optional)</label><textarea id="desc-${i}" placeholder="e.g. Covered front desk, helped with inventory..."></textarea></div>
           <button class="add-sh-btn" id="addbtn-${i}" onclick="handleAdd(${i})">+ Log Shift</button>
