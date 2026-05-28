@@ -999,11 +999,12 @@ async function renderHistory(){
     const [yr,mo,dy]=key.split('-').map(Number);
     Object.entries(data.days).forEach(([di,shifts])=>{
       const diNum=parseInt(di);
-      const d=new Date(yr,mo-1,dy+diNum); // local date, no UTC offset issue
+      const dateOffset=(diNum+1)%7; // reverse of displayToStore: store 6=Mon(+0), store 0=Tue(+1)...
+      const d=new Date(yr,mo-1,dy+dateOffset);
       (shifts||[]).forEach(sh=>{
         if(filterJob&&sh.jid!==filterJob)return;
-        // storage index to display name: 0=Sun->6, 1=Mon->0 ... 6=Sat->5
-        const displayIdx = diNum===0 ? 6 : diNum-1;
+        // reverse of displayToStore: store si -> display (si+1)%7
+        const displayIdx = (diNum+1)%7;
         allShifts.push({...sh,date:d,weekKey:key,di:diNum,dayName:DNAMES[displayIdx]});
       });
     });
