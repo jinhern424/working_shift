@@ -104,6 +104,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .over-alert{background:var(--red-bg);border:1.5px solid #fca5a5;border-radius:12px;padding:10px 14px;font-size:13px;color:var(--red);font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .over-alert.h{display:none}
 
+/* ── JOB BREAKDOWN ── */
+.job-breakdown{margin-bottom:20px}
+.jb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.jb-list{display:flex;flex-direction:column;gap:6px}
+.jb-row{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.jb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.jb-name{font-size:13px;font-weight:600;flex:1}
+.jb-hrs{font-size:14px;font-weight:800;font-family:'Playfair Display',serif;color:var(--green)}
+.jb-pay{font-size:12px;color:var(--muted);margin-left:8px;min-width:52px;text-align:right}
+.jb-bar-wrap{width:100%;height:4px;background:var(--border);border-radius:99px;margin-top:6px;overflow:hidden}
+.jb-bar{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+
 /* DAYS */
 .days{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 .day-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s}
@@ -359,6 +371,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div class="prog-track"><div class="prog-fill" id="progBar" style="width:0%"></div></div>
     </div>
     <div class="over-alert h" id="overAlert">⚠️ You have exceeded this week's cap!</div>
+    <div class="job-breakdown" id="jobBreakdown"></div>
     <div class="stats">
       <div class="stat anim"><div class="stat-lbl">Hours</div><div class="stat-v g" id="sHrs">0.0</div><div class="stat-s">this week</div></div>
       <div class="stat anim" style="animation-delay:50ms"><div class="stat-lbl">Remaining</div><div class="stat-v a" id="sRem">–</div><div class="stat-s">hrs left</div></div>
@@ -397,6 +410,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <div class="j-form-row">
           <div class="ff"><label>Job Name</label><input type="text" id="jName" placeholder="e.g. Library Desk"></div>
           <div class="ff"><label>Rate ($/hr)</label><input type="number" id="jRate" min="0" step="0.5" placeholder="12.50"></div>
+          <div class="ff"><label>Week Limit (hrs)</label><input type="number" id="jLimit" min="0" step="0.5" placeholder="e.g. 20"></div>
         </div>
         <button class="add-j-btn" onclick="addJob()">Add Job</button>
       </div>
@@ -446,6 +460,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       </div>
       <div class="modal-field"><label>Job Name</label><input type="text" id="editName" placeholder="e.g. Library Desk"></div>
       <div class="modal-field"><label>Hourly Rate ($/hr)</label><input type="number" id="editRate" min="0" step="0.5"></div>
+      <div class="modal-field"><label>Weekly Hour Limit (0 = no limit)</label><input type="number" id="editLimit" min="0" step="0.5" placeholder="e.g. 20"></div>
       <div class="modal-section-lbl">Icon</div>
       <div class="modal-picker" id="editEmojiPick"></div>
       <div class="modal-section-lbl">Colour</div>
@@ -742,8 +757,9 @@ window.addJob=async function(){
   const rate=parseFloat(document.getElementById('jRate').value);
   if(!name||isNaN(rate))return alert('Enter a job name and hourly rate.');
   setSync('ing','Saving...');
-  await addDoc(jobsCol(),{name,rate,emoji:pEmoji,color:pColor,createdAt:Date.now()});
-  document.getElementById('jName').value='';document.getElementById('jRate').value='';
+  const weekLimit=parseFloat(document.getElementById('jLimit').value)||0;
+  await addDoc(jobsCol(),{name,rate,weekLimit,emoji:pEmoji,color:pColor,createdAt:Date.now()});
+  document.getElementById('jName').value='';document.getElementById('jRate').value='';document.getElementById('jLimit').value='';
 };
 window.delJob=async function(id){
   if(!confirm('Delete this job?'))return;
@@ -759,6 +775,7 @@ window.openEditModal=function(id){
   editingJobId=id;editEmoji=j.emoji;editColor=j.color;
   document.getElementById('editName').value=j.name;
   document.getElementById('editRate').value=j.rate;
+  document.getElementById('editLimit').value=j.weekLimit||0;
   document.getElementById('editEmojiPick').innerHTML=EMOJIS.map(e=>`<div class="modal-e-opt${e===editEmoji?' on':''}" onclick="pickEditE('${e}',this)">${e}</div>`).join('');
   document.getElementById('editColorPick').innerHTML=COLORS.map(c=>`<div class="modal-c-opt${c===editColor?' on':''}" style="background:${c}" onclick="pickEditC('${c}',this)"></div>`).join('');
   document.getElementById('editJobModal').classList.remove('h');
@@ -768,7 +785,8 @@ window.saveEditJob=async function(){
   const rate=parseFloat(document.getElementById('editRate').value);
   if(!name||isNaN(rate))return alert('Please enter a name and rate.');
   setSync('ing','Saving...');
-  await updateDoc(doc(db,'users',currentUid,'jobs',editingJobId),{name,rate,emoji:editEmoji,color:editColor});
+  const weekLimit=parseFloat(document.getElementById('editLimit').value)||0;
+  await updateDoc(doc(db,'users',currentUid,'jobs',editingJobId),{name,rate,weekLimit,emoji:editEmoji,color:editColor});
   closeModal('editJobModal');
 };
 window.pickEditE=function(e,el){editEmoji=e;document.querySelectorAll('#editEmojiPick .modal-e-opt').forEach(x=>x.classList.remove('on'));el.classList.add('on');};
@@ -843,6 +861,64 @@ function renderStats(){
   const bar=document.getElementById('progBar');
   bar.style.width=pct+'%';bar.className='prog-fill'+(over?' o':pct>80?' w':'');
   document.getElementById('overAlert').className='over-alert'+(over?'':' h');
+  renderJobBreakdown(data);
+}
+
+function renderJobBreakdown(data){
+  const container=document.getElementById('jobBreakdown');
+  if(!container)return;
+
+  // Calculate hours and pay per job
+  const jobMap={};
+  for(let i=0;i<7;i++){
+    const si=displayToStore(i);
+    const shifts=(data.days&&data.days[si])||[];
+    shifts.forEach(sh=>{
+      const net=netHrs(sh);
+      if(!jobMap[sh.jid]) jobMap[sh.jid]={hrs:0,pay:0};
+      jobMap[sh.jid].hrs+=net;
+      const j=jobs.find(x=>x.id===sh.jid);
+      if(j) jobMap[sh.jid].pay+=net*j.rate;
+    });
+  }
+
+  const entries=Object.entries(jobMap);
+  if(entries.length===0){container.innerHTML='';return;}
+
+  const maxHrs=Math.max(...entries.map(([,v])=>v.hrs));
+
+  container.innerHTML=`
+    <div class="jb-title">Hours by Job This Week</div>
+    <div class="jb-list">
+      ${entries.map(([jid,v])=>{
+        const j=jobs.find(x=>x.id===jid)||{name:'Unknown',color:'#999',emoji:'?'};
+        const hrs=Math.round(v.hrs*100)/100;
+        const pct=maxHrs>0?Math.round(hrs/maxHrs*100):0;
+        const limit=j.weekLimit||0;
+        const overLimit=limit>0&&hrs>limit;
+        const nearLimit=limit>0&&!overLimit&&hrs/limit>=0.8;
+        const barPct=limit>0?Math.min(100,Math.round(hrs/limit*100)):pct;
+        const barColor=overLimit?'var(--red)':nearLimit?'var(--warn)':j.color;
+        const limitTxt=limit>0
+          ? (overLimit
+              ? `<span style="font-size:10px;font-weight:700;color:var(--red);background:#fef2f2;padding:2px 7px;border-radius:99px">⚠️ Over ${limit}h limit!</span>`
+              : `<span style="font-size:10px;color:var(--muted)">${hrs.toFixed(1)} / ${limit}h</span>`)
+          : `<span style="font-size:10px;color:var(--muted)">no limit set</span>`;
+        return `<div class="jb-row" style="${overLimit?'border-color:rgba(220,38,38,.35);background:#fef2f2':nearLimit?'border-color:rgba(184,134,11,.3)':''}">
+          <div class="jb-dot" style="background:${j.color}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:14px">${j.emoji}</span>
+              <span class="jb-name">${j.name}</span>
+              <span class="jb-hrs" style="${overLimit?'color:var(--red)':''}">${hrs.toFixed(2)}h</span>
+              <span class="jb-pay">$${v.pay.toFixed(2)}</span>
+              ${limitTxt}
+            </div>
+            ${limit>0?`<div class="jb-bar-wrap"><div class="jb-bar" style="width:${barPct}%;background:${barColor}"></div></div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 // ── render days ──
@@ -1066,7 +1142,7 @@ function renderJobsPanel(){
     const c=document.createElement('div');c.className='j-card anim';c.style.animationDelay=(i*40)+'ms';
     c.innerHTML=`
       <div class="j-icon" style="background:${j.color}20;border:2px solid ${j.color}50">${j.emoji}</div>
-      <div class="j-info"><div class="j-name">${j.name}</div><div class="j-rate-txt">$${j.rate}/hr</div></div>
+      <div class="j-info"><div class="j-name">${j.name}</div><div class="j-rate-txt">$${j.rate}/hr${j.weekLimit?` · max ${j.weekLimit}h/wk`:' · no weekly limit'}</div></div>
       <button class="j-edit-btn" onclick="openEditModal('${j.id}')">✏️ Edit</button>
       <button class="j-del" onclick="delJob('${j.id}')">🗑</button>`;
     list.appendChild(c);
